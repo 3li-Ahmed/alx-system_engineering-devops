@@ -1,25 +1,28 @@
 #!/usr/bin/python3
-"""
-    returns a list containing the titles of all hot articles for a given subreddit.
-"""
-import requests
-from sys import argv
+"""Module for task 2"""
 
 
-def recurse(subreddit, hot_list=[], after=""):
-    """Get the all host posts"""
-    if after is None:
-        return []
+def recurse(subreddit, hot_list=[], count=0, after=None):
+    """Queries the Reddit API and returns all hot posts
+    of the subreddit"""
+    import requests
 
-    url_sred_inf = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
-    url_sred_inf += "?limit=100&after={}".format(after)
-    headers = {'user-agent': 'request'}
-    response = requests.get(url_sred_inf, headers=headers,
+    sub_info = requests.get("https://www.reddit.com/r/{}/hot.json"
+                            .format(subreddit),
+                            params={"count": count, "after": after},
+                            headers={"User-Agent": "My-User-Agent"},
                             allow_redirects=False)
-    if str(response) != "<Response [200]>":
+    if sub_info.status_code >= 400:
         return None
-    r_json = response.json()
-    hot_posts_json = r_json.get("data").get("children")
-    for post in hot_posts_json:
-        hot_list.append(post.get("data").get("title"))
-    return hot_list + recurse(subreddit, [], r_json.get("data").get("after"))
+
+    hot_l = hot_list + [child.get("data").get("title")
+                        for child in sub_info.json()
+                        .get("data")
+                        .get("children")]
+
+    info = sub_info.json()
+    if not info.get("data").get("after"):
+        return hot_l
+
+    return recurse(subreddit, hot_l, info.get("data").get("count"),
+                   info.get("data").get("after"))

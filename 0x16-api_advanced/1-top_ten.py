@@ -1,24 +1,18 @@
 #!/usr/bin/python3
-"""
-    Uses the reddit API to print titles of the 10 hot posts
-"""
-import requests
-from sys import argv
+"""Module for task 1"""
 
 
 def top_ten(subreddit):
-    """Get the 10 host posts"""
-    url_sred_inf = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
-    url_sred_inf += "?limit=10"
-    headers = {'user-agent': 'request'}
-    response = requests.get(url_sred_inf, headers=headers,
+    """Queries the Reddit API and returns the top 10 hot posts
+    of the subreddit"""
+    import requests
+
+    sub_info = requests.get("https://www.reddit.com/r/{}/hot.json?limit=10"
+                            .format(subreddit),
+                            headers={"User-Agent": "My-User-Agent"},
                             allow_redirects=False)
-    if str(response) != "<Response [200]>":
-        print(None)
-        return
-    r_json = response.json()
-    hot_posts_json = r_json.get("data").get("children")
-    top_10_posts = ""
-    for post in hot_posts_json:
-        top_10_posts += post.get("data").get("title") + "\n"
-    print(top_10_posts, end="")
+    if sub_info.status_code >= 300:
+        print('None')
+    else:
+        [print(child.get("data").get("title"))
+         for child in sub_info.json().get("data").get("children")]
